@@ -1,0 +1,16 @@
+## Frameworks supported
+- .NET 3.5 or later
+- Windows Phone 7.1 (Mango)
+
+## Dependencies
+- [RestSharp] (https://www.nuget.org/packages/RestSharp)
+- [Json.NET] (https://www.nuget.org/packages/Newtonsoft.Json/)
+- [CellStore.NET] (https://www.nuget.org/packages/CellStore.NET)
+
+NOTE: The DLLs included in the package may not be the latest version. We recommend using [NuGet] (https://docs.nuget.org/consume/installing-nuget) to obtain the latest version of the packages:
+```
+Install-Package RestSharp
+Install-Package Newtonsoft.Json
+Install-Package CellStore.NET
+``` 
+

@@ -1,0 +1,2 @@
+SET CSCPATH=%SYSTEMROOT%\Microsoft.NET\Framework\v4.0.30319
+%CSCPATH%\csc /reference:bin/CellStore.dll;bin/ExcelDna.Integration.dll;bin/Newtonsoft.Json.dll;bin/RestSharp.dll /target:library /out:bin/{{packageName}}.dll /recurse:src\*.cs /doc:bin/{{packageName}}.xml

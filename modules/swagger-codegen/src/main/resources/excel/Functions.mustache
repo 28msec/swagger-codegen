@@ -1,0 +1,188 @@
+using System;
+using System.IO;
+using System.Collections.Generic;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Windows.Forms;
+using Newtonsoft.Json.Linq;
+using RestSharp;
+using ExcelDna.Integration;
+using {{packageName}}.Client;
+{{#hasImport}}using {{packageName}}.Model;
+{{/hasImport}}
+
+namespace {{packageName}}.Api
+{
+    {{#operations}}
+    /// <summary>
+    /// Represents a collection of functions to interact with the API endpoints
+    /// </summary>
+    public class {{classname}}
+    {
+
+        private static void log(String message){
+          System.IO.StreamWriter file = new System.IO.StreamWriter("c:\\excelLog.txt", true);
+          file.WriteLine("LOG {0}", message);
+          file.Close();
+        }
+        
+        private static string factToString(JObject fact){
+          StringBuilder sb = new StringBuilder();
+          JObject aspects = (JObject)fact["Aspects"];
+          String archive = ((JValue)aspects["xbrl28:Archive"]).Value<String>();
+          String entity = ((JValue)aspects["xbrl:Entity"]).Value<String>();
+          String period = ((JValue)aspects["xbrl:Period"]).Value<String>();
+          String concept = ((JValue)aspects["xbrl:Concept"]).Value<String>();
+          String unit = ((JValue)aspects["xbrl:Unit"]).Value<String>();
+          String value = ((JValue)fact["Value"]).Value<String>();
+          
+          sb.AppendLine(concept + "= " + value);
+          sb.AppendLine(entity + " (" + archive + ", " + period + ", " + unit + ")");
+          List<string> ignore = new List<string> { "xbrl28:Archive", "xbrl:Entity", "xbrl:Period", "xbrl:Concept", "xbrl:Unit"};
+          foreach (JValue keyAspect in fact["KeyAspects"].Children())
+          {
+            String dim = keyAspect.Value<String>();
+            if(ignore.Contains(dim))
+              continue;
+            String mem = ((JValue)aspects[dim]).Value<String>();
+            sb.AppendLine(dim + "= " + mem);
+          }
+          sb.AppendLine("------------------------------------");
+          return sb.ToString();
+        }
+        
+        private static Object[,] defaultErrorHandler(Exception ex)
+        {
+          String caption = "ERROR";
+          String msg = ex.Message;
+          MessageBox.Show(msg, caption);
+          Object[,] error = new Object[,]{ { "# ERROR " + msg } };
+          /*System.IO.StreamWriter file = new System.IO.StreamWriter("c:\\excelLog.txt", true);
+          file.WriteLine("Message: {0}", ex.Message);
+          file.WriteLine("Source: {0}", ex.Source);
+          file.WriteLine("StackTrace: {0}", ex.StackTrace);
+          file.Close();*/
+          return error;
+        }
+        
+        private static Object[,] getFactTableResult(dynamic response, bool? open = false){
+          JArray facts = (JArray) response["FactTable"];
+          Object[,] results;
+          if(facts.Count > 0){
+            results = new Object[facts.Count, 1];
+          } else {
+            results = new Object[1,1]{ { ExcelEmpty.Value } };
+          }
+          
+          StringBuilder sb = new StringBuilder();
+          int row = 0;
+          foreach (JObject fact in facts.Children())
+          {
+            JValue value = (JValue) fact["Value"];
+            results[row, 0] = value.Value<double>();
+            if(open==true)
+              sb.Append(factToString(fact));
+            row++;
+          }
+          if(open==true){
+            MessageBox.Show(sb.ToString(), "Multiple Facts");
+          }
+          return results;
+        }
+        
+        private static String castParamString(Object param, String paramName, bool isMandatory)
+        {
+            String param_casted;
+            if (param is string)
+            {
+                param_casted = Convert.ToString(param);
+            }
+            else if (param is double)
+            {
+                param_casted = Convert.ToString(param);
+            }
+            else if (!isMandatory && (param is ExcelEmpty || param is ExcelMissing))
+            {
+                param_casted = null;
+            }
+            else if (isMandatory && (param is ExcelEmpty || param is ExcelMissing))
+            {
+                throw new ArgumentException("Mandatory Parameter missing: '" + paramName + "'.", paramName);
+            }
+            else
+            {
+                throw new ArgumentException("Invalid Parameter value '" + param.ToString() + "'.", paramName);
+            }
+            return param_casted;
+        }
+        
+        
+        {{#operation}}
+        #region {{nickname}}
+        /// <summary>
+        /// {{summary}} {{notes}}
+        /// </summary>
+        /// <param name="basePath">A URL to a specific endpoint, e.g. http://domain/v1/_queries/public</param> 
+        {{#allParams}}/// <param name="{{paramName}}">{{description}}</param> 
+        {{/allParams}}/// <returns>{{#returnType}}{{^returnContainer}}{{{returnType}}}{{/returnContainer}}{{/returnType}}</returns>            
+        [ExcelFunction(Name = "{{nickname}}", Category = "{{packageName}} / {{classname}}", Description = "{{summary}}")]
+        public static {{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}void{{/returnType}} {{nickname}} (
+          string basePath,
+          {{#allParams}}[ExcelArgument(Description="{{description}}", Name="{{paramName}}")]{{{dataType}}} {{paramName}}{{^required}} = {{defaultValue}}{{/required}}{{#hasMore}}, {{/hasMore}}
+          {{/allParams}})
+        {
+            try
+            {
+                CellStore.Api.{{classname}} api = ApiClients.get{{classname}}Client(basePath);
+                
+                {{#allParams}}{{#isPatternParam}}
+                Dictionary<string, {{baseType}}> {{paramName}}_casted = null;
+                if ({{paramName}} == null){
+                  {{paramName}}_casted = {{defaultValue}};
+                } else if({{paramName}} is Object[])
+                {
+                  {{paramName}}_casted = new Dictionary<string, {{baseType}}>();
+                  int {{paramName}}_d1 = {{paramName}}.Length;
+                  for (int i=0; i<{{paramName}}_d1; i++) 
+                  {
+                    if({{paramName}}[i] == null || {{paramName}}[i] is ExcelEmpty || {{paramName}}[i] is ExcelMissing){
+                      continue;
+                    }
+                    string {{paramName}}_Val = Convert.ToString({{paramName}}[i]);
+                    string[] tokenz = {{paramName}}_Val.Split('=');
+                    string errormsg = "Invalid Parameter value '" + {{paramName}}_Val + "' for parameter '{{paramName}}'. Accepted format: 'prefix:Dimension=value'.";
+                    if(tokenz.Length!=2){
+                      throw new ArgumentException(errormsg, "{{paramName}}");
+                    }
+                    Regex regex = new Regex("{{pattern}}");
+                    string {{paramName}}_Key = tokenz[0];
+                    if (!regex.IsMatch({{paramName}}_Key)){
+                      {{paramName}}_Key = tokenz[0] + "{{patternSuffix}}";
+                    }
+                    if (!regex.IsMatch({{paramName}}_Key)){
+                      throw new ArgumentException(errormsg, "{{paramName}}");
+                    }
+                    {{baseType}} {{paramName}}_Value = {{conversion}}(tokenz[1]);
+                    {{paramName}}_casted.Add({{paramName}}_Key, {{paramName}}_Value);
+                  }                
+                } else {
+                  throw new ArgumentException("Invalid Parameter value '{{paramName}}'.", "{{paramName}}");
+                }{{/isPatternParam}}
+                {{^isPatternParam}}{{{baseType}}} {{paramName}}_casted = castParamString({{paramName}}, "{{paramName}}", {{#required}}true{{/required}}{{^required}}false{{/required}});{{/isPatternParam}}
+            {{/allParams}}
+                
+                dynamic response = api.{{nickname}}(
+                  {{#allParams}}{{paramName}}_casted{{#hasMore}},
+                  {{/hasMore}}{{/allParams}});
+                return getFactTableResult(response, open_casted);
+            }
+            catch (Exception e)
+            {
+                return defaultErrorHandler(e);
+            }
+        }
+        #endregion
+        {{/operation}}
+    }
+    {{/operations}}
+}
