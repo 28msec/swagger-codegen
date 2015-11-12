@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.regex.Pattern;
 
 import java.net.URLEncoder;
 
@@ -333,11 +334,19 @@ public class ApiClient {
    *   if JSON exists in the given array, use it;
    *   otherwise use the first one of the array.
    *
+   * @param headerParams The user provided header parameters map
    * @param contentTypes The Content-Type array to select from
    * @return The Content-Type header to use. If the given array is empty,
    *   JSON will be used.
    */
-  public String selectHeaderContentType(String[] contentTypes) {
+  public String selectHeaderContentType({{javaUtilPrefix}}Map<String, String> headerParams, String[] contentTypes) {
+  String customContentType = null;
+    for (String header: headerParams.keySet())
+    {
+      if (header.equalsIgnoreCase("Content-Type"))
+        customContentType = headerParams.get(header);
+    }
+    if (customContentType != null) return customContentType;
     if (contentTypes.length == 0) return "application/json";
     if (StringUtil.containsIgnoreCase(contentTypes, "application/json")) return "application/json";
     return contentTypes[0];
@@ -651,4 +660,23 @@ public class ApiClient {
     }
     return hostMap.get(basePath);
   }
+  
+  /**
+   * Adds pattern-based parameters (after name validation) to a dictionary query parameters.
+   * @throws ApiException 
+   */
+  public <T> void addPatternQueryParameters(String collectionFormat, Map<String, T> parameters, String pattern, List<Pair> queryParams) throws ApiException 
+  {
+    Pattern p = Pattern.compile(pattern);
+    for (Entry<String, T> entry: parameters.entrySet())
+    {
+      if (p.matcher(entry.getKey()).matches())
+      {
+        queryParams.addAll(parameterToPairs(collectionFormat, entry.getKey(), entry.getValue()));
+      }
+      else
+        throw new ApiException(400, "Invalid parameter " + entry.getKey() + ", parameter name must match the regular expression \"" + pattern + "\"");
+    }  
+  }
+  
 }

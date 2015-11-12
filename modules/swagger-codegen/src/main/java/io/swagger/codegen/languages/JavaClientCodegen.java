@@ -1,6 +1,8 @@
 package io.swagger.codegen.languages;
 
 import com.google.common.base.Strings;
+
+import io.cellstore.codegen.CellStoreCodegen;
 import io.swagger.codegen.CliOption;
 import io.swagger.codegen.CodegenConfig;
 import io.swagger.codegen.CodegenConstants;
@@ -29,7 +31,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JavaClientCodegen extends DefaultCodegen implements CodegenConfig {
+public class JavaClientCodegen extends CellStoreCodegen implements CodegenConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(JavaClientCodegen.class);
 
     protected String invokerPackage = "io.swagger.client";

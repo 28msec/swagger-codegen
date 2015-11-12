@@ -51,7 +51,7 @@ public class {{classname}} {
      }
      {{/required}}{{/allParams}}
     // create path and map variables
-    String {{localVariablePrefix}}path = "{{{path}}}".replaceAll("\\{format\\}","json"){{#pathParams}}
+    String {{localVariablePrefix}}path = "{{{path}}}"{{#pathParams}}
       .replaceAll("\\{" + "{{baseName}}" + "\\}", {{localVariablePrefix}}apiClient.escapeString({{{paramName}}}.toString())){{/pathParams}};
 
     // query params
@@ -62,6 +62,14 @@ public class {{classname}} {
     {{#queryParams}}
     {{localVariablePrefix}}queryParams.addAll({{localVariablePrefix}}apiClient.parameterToPairs("{{#collectionFormat}}{{{collectionFormat}}}{{/collectionFormat}}", "{{baseName}}", {{paramName}}));
     {{/queryParams}}
+    
+    {{#hardcodedQueryParams}}
+    {{localVariablePrefix}}queryParams.addAll({{localVariablePrefix}}apiClient.parameterToPairs("{{#collectionFormat}}{{{collectionFormat}}}{{/collectionFormat}}", "{{baseName}}", "{{defaultValue}}"));
+    {{/hardcodedQueryParams}}
+    
+    {{#patternQueryParams}}if ({{paramName}} != null) 
+    {{localVariablePrefix}}apiClient.addPatternQueryParameters("{{#collectionFormat}}{{{collectionFormat}}}{{/collectionFormat}}", {{paramName}}, "{{pattern}}", {{localVariablePrefix}}queryParams);
+    {{/patternQueryParams}}
 
     {{#headerParams}}if ({{paramName}} != null)
     {{localVariablePrefix}}headerParams.put("{{baseName}}", {{localVariablePrefix}}apiClient.parameterToString({{paramName}}));
@@ -79,7 +87,7 @@ public class {{classname}} {
     final String[] {{localVariablePrefix}}contentTypes = {
       {{#consumes}}"{{mediaType}}"{{#hasMore}}, {{/hasMore}}{{/consumes}}
     };
-    final String {{localVariablePrefix}}contentType = {{localVariablePrefix}}apiClient.selectHeaderContentType({{localVariablePrefix}}contentTypes);
+    final String {{localVariablePrefix}}contentType = {{localVariablePrefix}}apiClient.selectHeaderContentType({{localVariablePrefix}}headerParams, {{localVariablePrefix}}contentTypes);
 
     String[] {{localVariablePrefix}}authNames = new String[] { {{#authMethods}}"{{name}}"{{#hasMore}}, {{/hasMore}}{{/authMethods}} };
 
