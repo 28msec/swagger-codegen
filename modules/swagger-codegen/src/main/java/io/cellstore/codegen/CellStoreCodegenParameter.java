@@ -25,10 +25,10 @@ public class CellStoreCodegenParameter extends CodegenParameter {
     {
       if (vendorExtensions.size() > 0)
       {
-        Object bindingName = vendorExtensions.get("x-name-pattern");
+        Object bindingName = vendorExtensions.get("x-pattern");
         Object hardcodedValue = vendorExtensions.get("x-binding-value");
         if (bindingName != null && hardcodedValue != null)
-          throw new RuntimeException("x-name-pattern and x-binding-value are not allowed on the same parameter");
+          throw new RuntimeException("x-pattern and x-binding-value are not allowed on the same parameter");
 
         if (bindingName == null && hardcodedValue == null)
           return Kind.NORMAL;
@@ -44,7 +44,7 @@ public class CellStoreCodegenParameter extends CodegenParameter {
     public void setParamName(DefaultCodegen codegen, Parameter param){
       if (vendorExtensions.size() > 0)
       {
-        Object bindingName = vendorExtensions.get("x-binding-name");
+        Object bindingName = vendorExtensions.get("x-name");
         if (bindingName != null)
         {
           if (bindingName instanceof String)
@@ -54,7 +54,7 @@ public class CellStoreCodegenParameter extends CodegenParameter {
           }
           else
           {
-            String msg = "Invalid value for x-binding-name, only strings are allowed\n";      
+            String msg = "Invalid value for x-name, only strings are allowed\n";
             throw new RuntimeException(msg);
           }
         }

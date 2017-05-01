@@ -160,7 +160,7 @@ public class CellStoreCSharpClientCodegen extends CSharpClientCodegen
     if(p.getParameterKind() == CellStoreCodegenParameter.Kind.PATTERN)
     {
       p.isPatternParam = new Boolean(true);
-      String pattern = (String)p.vendorExtensions.get("x-name-pattern");
+      String pattern = (String)p.vendorExtensions.get("x-pattern");
       p.pattern = pattern;
       int pos = pattern.lastIndexOf("::");
       if(pos != -1)
