@@ -183,10 +183,11 @@ namespace {{packageName}}.Api
         }
 
         {{#operation}}
+        #region {{operationId}}
         /// <summary>
-        /// {{summary}} {{notes}}
+        /// Builds a request for {{operationId}}.
         /// </summary>
-        /// <exception cref="{{packageName}}.Client.ApiException">Thrown when fails to build API request</exception>
+        /// <exception cref="{{packageName}}.Client.ApiException">Thrown when an error happens building the API request</exception>
         {{#allParams}}/// <param name="{{paramName}}">{{description}}{{^required}} (optional{{#defaultValue}}, default to {{.}}{{/defaultValue}}){{/required}}</param>
         {{/allParams}}/// <returns>IRestRequest</returns>
         private IRestRequest {{operationId}}BuildRequest ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{#hasMore}}, {{/hasMore}}{{/allParams}})
@@ -216,18 +217,6 @@ namespace {{packageName}}.Api
                 {{/consumes}}
             };
             String localVarHttpContentType = Configuration.ApiClient.SelectHeaderContentType(localVarHttpContentTypes);
-/* 28msec */
-            /*
-            // to determine the Accept header
-            String[] localVarHttpHeaderAccepts = new String[] {
-                {{#produces}}
-                "{{{mediaType}}}"{{#hasMore}}, {{/hasMore}}
-                {{/produces}}
-            };
-            String localVarHttpHeaderAccept = Configuration.ApiClient.SelectHeaderAccept(localVarHttpHeaderAccepts);
-            if (localVarHttpHeaderAccept != null)
-                localVarHeaderParams.Add("Accept", localVarHttpHeaderAccept);
-*/
 /* 28msec */
 /* 28msec */
             {{#hardcodedQueryParams}}localVarQueryParams.Add("{{baseName}}", Configuration.ApiClient.ParameterToString("{{defaultValue}}")); // hardcoded query parameter
@@ -325,9 +314,9 @@ namespace {{packageName}}.Api
         }
 
         /// <summary>
-        /// {{summary}} {{notes}}
+        /// Produces an ApiResponse object given a raw HTTP response for {{operationId}}.
         /// </summary>
-        /// <exception cref="{{packageName}}.Client.ApiException">Thrown when fails to make API call</exception>
+        /// <exception cref="{{packageName}}.Client.ApiException">Thrown when the result of the API call is invalid</exception>
         /// <param name="request">IRestRequest object to execute</param>
         /// <returns>ApiResponse of {{#returnType}}{{returnType}}{{/returnType}}{{^returnType}}Object(void){{/returnType}}</returns>
         private ApiResponse<{{#returnType}} {{{returnType}}} {{/returnType}}{{^returnType}}Object{{/returnType}}> {{operationId}}ProcessResponse (IRestRequest request, IRestResponse response)
@@ -411,6 +400,7 @@ namespace {{packageName}}.Api
             return {{operationId}}ProcessResponse(localVarRequest, localVarResponse);
         }
         {{/supportsAsync}}
+        #endregion {{operationId}}
         {{/operation}}
     }
     {{/operations}}
