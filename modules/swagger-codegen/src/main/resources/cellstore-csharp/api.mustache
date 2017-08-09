@@ -317,7 +317,8 @@ namespace {{packageName}}.Api
         /// Produces an ApiResponse object given a raw HTTP response for {{operationId}}.
         /// </summary>
         /// <exception cref="{{packageName}}.Client.ApiException">Thrown when the result of the API call is invalid</exception>
-        /// <param name="request">IRestRequest object to execute</param>
+        /// <param name="request">Request</param>
+        /// <param name="response">Response</param>
         /// <returns>ApiResponse of {{#returnType}}{{returnType}}{{/returnType}}{{^returnType}}Object(void){{/returnType}}</returns>
         private ApiResponse<{{#returnType}} {{{returnType}}} {{/returnType}}{{^returnType}}Object{{/returnType}}> {{operationId}}ProcessResponse (IRestRequest request, IRestResponse response)
         {
@@ -370,9 +371,52 @@ namespace {{packageName}}.Api
         {{/allParams}}/// <returns>ApiResponse of {{#returnType}}{{returnType}}{{/returnType}}{{^returnType}}Object(void){{/returnType}}</returns>
         public ApiResponse<{{#returnType}} {{{returnType}}} {{/returnType}}{{^returnType}}Object{{/returnType}}> {{operationId}}WithHttpInfo ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{#hasMore}}, {{/hasMore}}{{/allParams}})
         {
+            {{#autoPaginate}}
+            if (top == null && skip == null && count == null)
+            {
+                ApiResponse<Object> localVarFirstResponse = null;
+                JObject localVarRet = null;
+                top = 30;
+                skip = 0;
+                int localVarNumRequests = 0;
+                int localVarRetrieved;
+                do
+                {
+                    IRestRequest localVarRequest = {{operationId}}BuildRequest({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}});
+                    IRestResponse localVarResponse = (IRestResponse)Configuration.ApiClient.CallApi(localVarRequest);
+                    ApiResponse<Object> localVarApiResponse = {{operationId}}ProcessResponse(localVarRequest, localVarResponse);
+                    if (localVarFirstResponse == null)
+                        localVarFirstResponse = localVarApiResponse;
+                    Object localVarResponseBody = localVarApiResponse.Data;
+
+                    try
+                    {
+                        localVarRet = ApiClient.MergeResponses(localVarRet, localVarResponseBody, "{{autoPaginateCountField}}", "{{autoPaginateResultField}}");
+                        localVarRetrieved = ApiClient.GetField<int>(localVarResponseBody, new string[] { "Statistics", "{{autoPaginateCountField}}" });
+                    }
+                    catch (ApiException e)
+                    {
+                        throw new ApiException(localVarApiResponse.StatusCode, e.Message, localVarRequest, localVarResponse);
+                    }
+                    skip += top;
+                    localVarNumRequests++;
+                }
+                while (localVarRetrieved == top);
+                ApiClient.GetField<JObject>(localVarRet, new string[] { "Statistics" }).Add("NumRequests", localVarNumRequests);
+                return new ApiResponse<Object>(localVarFirstResponse.StatusCode, localVarFirstResponse.Headers, localVarRet);
+            }
+            else
+            {
+                IRestRequest localVarRequest = {{operationId}}BuildRequest({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}});
+                IRestResponse localVarResponse = (IRestResponse)Configuration.ApiClient.CallApi(localVarRequest);
+                return {{operationId}}ProcessResponse(localVarRequest, localVarResponse);
+            }
+            {{/autoPaginate}}
+            {{^autoPaginate}}
             IRestRequest localVarRequest = {{operationId}}BuildRequest({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}});
             IRestResponse localVarResponse = (IRestResponse) Configuration.ApiClient.CallApi(localVarRequest);
             return {{operationId}}ProcessResponse(localVarRequest, localVarResponse);
+            {{/autoPaginate}}
         }
 
         {{#supportsAsync}}
@@ -398,9 +442,52 @@ namespace {{packageName}}.Api
         {{/allParams}}/// <returns>Task of ApiResponse{{#returnType}} ({{returnType}}){{/returnType}}</returns>
         public async System.Threading.Tasks.Task<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Object{{/returnType}}>> {{operationId}}AsyncWithHttpInfo ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{#hasMore}}, {{/hasMore}}{{/allParams}})
         {
+            {{#autoPaginate}}
+            if (top == null && skip == null && count == null)
+            {
+                ApiResponse<Object> localVarFirstResponse = null;
+                JObject localVarRet = null;
+                top = 30;
+                skip = 0;
+                int localVarNumRequests = 0;
+                int localVarRetrieved;
+                do
+                {
+                    IRestRequest localVarRequest = {{operationId}}BuildRequest({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}});
+                    IRestResponse localVarResponse = (IRestResponse)await Configuration.ApiClient.CallApiAsync(localVarRequest);
+                    ApiResponse<Object> localVarApiResponse = {{operationId}}ProcessResponse(localVarRequest, localVarResponse);
+                    if (localVarFirstResponse == null)
+                        localVarFirstResponse = localVarApiResponse;
+                    Object localVarResponseBody = localVarApiResponse.Data;
+
+                    try
+                    {
+                        localVarRet = ApiClient.MergeResponses(localVarRet, localVarResponseBody, "{{autoPaginateCountField}}", "{{autoPaginateResultField}}");
+                        localVarRetrieved = ApiClient.GetField<int>(localVarResponseBody, new string[] { "Statistics", "{{autoPaginateCountField}}" });
+                    }
+                    catch (ApiException e)
+                    {
+                        throw new ApiException(localVarApiResponse.StatusCode, e.Message, localVarRequest, localVarResponse);
+                    }
+                    skip += top;
+                    localVarNumRequests++;
+                }
+                while (localVarRetrieved == top);
+                ApiClient.GetField<JObject>(localVarRet, new string[] { "Statistics" }).Add("NumRequests", localVarNumRequests);
+                return new ApiResponse<Object>(localVarFirstResponse.StatusCode, localVarFirstResponse.Headers, localVarRet);
+            }
+            else
+            {
+                IRestRequest localVarRequest = {{operationId}}BuildRequest({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}});
+                IRestResponse localVarResponse = (IRestResponse)await Configuration.ApiClient.CallApiAsync(localVarRequest);
+                return {{operationId}}ProcessResponse(localVarRequest, localVarResponse);
+            }
+            {{/autoPaginate}}
+            {{^autoPaginate}}
             IRestRequest localVarRequest = {{operationId}}BuildRequest({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}});
-            IRestResponse localVarResponse = (IRestResponse) await Configuration.ApiClient.CallApiAsync(localVarRequest);
+            IRestResponse localVarResponse = (IRestResponse)await Configuration.ApiClient.CallApiAsync(localVarRequest);
             return {{operationId}}ProcessResponse(localVarRequest, localVarResponse);
+            {{/autoPaginate}}
         }
         {{/supportsAsync}}
         #endregion {{operationId}}

@@ -13,6 +13,7 @@ using System.Net;
 using System.Text;
 using Newtonsoft.Json;
 using RestSharp;
+using Newtonsoft.Json.Linq;
 
 namespace {{packageName}}.Client
 {
@@ -98,7 +99,19 @@ namespace {{packageName}}.Client
         public RestClient RestClient { get; set; }
 
 /* 28msec */
-        // Creates and sets up a RestRequest prior to a call.
+        /// <summary>
+        /// Creates and sets up a RestRequest prior to a call.
+        /// </summary>
+        /// <param name="path">Path</param>
+        /// <param name="method">Method</param>
+        /// <param name="queryParams">Query parameters</param>
+        /// <param name="postBody">Body</param>
+        /// <param name="headerParams">Headers</param>
+        /// <param name="formParams">Form parameters</param>
+        /// <param name="fileParams">File parameters</param>
+        /// <param name="pathParams">Path parameters</param>
+        /// <param name="contentType">Content type</param>
+        /// <returns>RestRequest</returns>
         public RestRequest PrepareRequest(
             String path, RestSharp.Method method, Dictionary<String, List<String>> queryParams, Object postBody,
 /* 28msec */
@@ -300,6 +313,7 @@ namespace {{packageName}}.Client
         /// </summary>
         /// <param name="response">The HTTP response.</param>
         /// <param name="type">Object type.</param>
+        /// <param name="cellstoreFormatParameter">The format parameter of the request, if any</param>
         /// <returns>Object representation of the JSON string.</returns>
         public object Deserialize(IRestResponse response, Type type, String cellstoreFormatParameter)
         {
@@ -530,6 +544,7 @@ namespace {{packageName}}.Client
             }
         }
         {{#supportsUWP}}
+
         /// <summary>
         /// Convert stream to byte array
         /// </summary>
@@ -544,5 +559,101 @@ namespace {{packageName}}.Client
             return buffer;
         }
         {{/supportsUWP}}
+
+        /// <summary>
+        /// Extracts the given field from the given object in a safe manner.
+        /// </summary>
+        /// <param name="response">Response</param>
+        /// <param name="path">Path to the field</param>
+        /// <param name="mandatory">Mandatory or not</param>
+        /// <returns>JToken</returns>
+        private static JToken GetRawField(Object response, string[] path, bool mandatory)
+        {
+            if (response == null)
+                throw new ApiException(000, "Null response");
+
+            if (!(response is JObject))
+                throw new ApiException(000, "Invalid response type, expecting JObject");
+
+            JObject parent = (JObject)response;
+            for (int i=0; i< path.Length -1; ++i)
+            {
+                JToken field = parent.GetValue(path[i]);
+                if (field == null)
+                {
+                    if (mandatory)
+                        throw new ApiException(000, "Missing field " + String.Join(".", path) + " in response object");
+                    else
+                        return null;
+                }
+
+                if (!(field is JObject))
+                    throw new ApiException(000, "Field " + String.Join(".", path) + " in response object is not an object");
+                parent = (JObject)field;
+            }
+            JToken ret = parent.GetValue(path[path.Length - 1]);
+            if (ret == null && mandatory)
+                throw new ApiException(000, "Missing field " + String.Join(".", path) + " in response object");
+            return ret;
+        }
+
+        /// <summary>
+        /// Extracts the given field and converts it to the given type in a safe manner.
+        /// </summary>
+        /// <typeparam name="T">The type of the field</typeparam>
+        /// <param name="response">Response</param>
+        /// <param name="path">Path to the field to extract</param>
+        /// <returns>T</returns>
+        public static T GetField<T>(Object response, string[] path)
+        {
+            JToken field = GetRawField(response, path, true);
+            if (field == null)
+                throw new ApiException(000, "Missing field " + String.Join(".", path) + " in response object");
+            try
+            {
+                T ret = field.Value<T>();
+                return ret;
+            }
+            catch (Exception)
+            {
+                throw new ApiException(000, "Field " + String.Join(".", path) + " in response object has invalid value, expecting " + typeof(T).FullName);
+            }
+        }
+
+        /// <summary>
+        /// Merge two paginated responses.
+        /// </summary>
+        /// <param name="x">First response, can be null</param>
+        /// <param name="y">Second response</param>
+        /// <param name="countField">Integer field that is used to count the number of results inside the Statistics field</param>
+        /// <param name="dataField">Array field used to contain the response data</param>
+        /// <returns>Merged response</returns>
+        public static JObject MergeResponses(JObject x, Object y, String countField, String dataField)
+        {
+            if (y == null)
+                throw new ApiException(000, "Null response");
+
+            if (x == null)
+            {
+                if (!(y is JObject))
+                    throw new ApiException(000, "Invalid response type, expecting JObject");
+                return (JObject)y;
+            }
+
+            long countX = GetField<long>(x, new string[] { "Statistics", countField });
+            long countY = GetField<long>(y, new string[] { "Statistics", countField });
+            long countTotal = countX + countY;
+
+            GetRawField(x, new string[] { "Statistics", countField }, true).Replace(countTotal);
+            GetRawField(x, new string[] { dataField + "@odata.count" }, true).Replace(countTotal);
+            x.Remove(dataField + "@odata.id"); // if it is not found no error is thrown
+            x.Remove(dataField + "@odata.nextLink"); // if it is not found no error is thrown
+
+            JArray dataX = GetField<JArray>(x, new string[] { dataField });
+            JArray dataY = GetField<JArray>(y, new string[] { dataField });
+            foreach (JToken item in dataY.Values<JToken>())
+                dataX.Add(item);
+            return x;
+        }
     }
 }
