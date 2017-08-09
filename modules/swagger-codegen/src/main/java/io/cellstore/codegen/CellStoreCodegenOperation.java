@@ -9,27 +9,24 @@ import java.util.List;
 public class CellStoreCodegenOperation extends CodegenOperation {
     public List<CodegenParameter> patternQueryParams = new ArrayList<CodegenParameter>();
     public List<CodegenParameter> hardcodedQueryParams = new ArrayList<CodegenParameter>();
-    
+
+    public Boolean autoPaginate = false;
+    public String autoPaginateCountField, autoPaginateResultField;
+
     public boolean includeOperation()
     {
-      if (vendorExtensions.size() > 0)
-      {
-        Object excludeFromBindings = vendorExtensions.get("x-exclude-from-bindings");
-        if (excludeFromBindings != null)
-        {
-          if (excludeFromBindings instanceof Boolean)
-          {
-            if (((Boolean)excludeFromBindings).booleanValue())
-              return false;
-          }
-          else
-          {
-            String msg = "Invalid value for x-exclude-from-bindings, only booleans are allowed\n";      
-            throw new RuntimeException(msg);
-          }
-        }
-      }
-      return true;
+      return !CellStoreCSharpClientCodegen.getBooleanExtensionValue(vendorExtensions, "x-exclude-from-bindings", false);
     }
-    
+
+    public void initAutoPagination()
+    {
+      autoPaginate = CellStoreCSharpClientCodegen.getBooleanExtensionValue(vendorExtensions, "x-autoPaginate", false);
+      if (autoPaginate)
+      {
+        autoPaginateCountField = CellStoreCSharpClientCodegen.getStringExtensionValue(vendorExtensions, "x-autoPaginateCountField");
+        autoPaginateResultField = CellStoreCSharpClientCodegen.getStringExtensionValue(vendorExtensions, "x-autoPaginateResultField");
+        if (autoPaginateCountField == null || autoPaginateResultField == null)
+          throw new RuntimeException("When x-autoPaginate is specified and true, x-autoPaginateCountField and x-autoPaginateResultField must be specified");
+      }
+    }
 }

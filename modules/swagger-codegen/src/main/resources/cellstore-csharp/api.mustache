@@ -350,6 +350,7 @@ namespace {{packageName}}.Api
 
         /// <summary>
         /// {{summary}} {{notes}}
+        /// {{#autoPaginate}}This method supports automatic pagination. When a request is made without specifying the top or skip parameter, all results are returned, as if the page length was infinite.{{/autoPaginate}}
         /// </summary>
         /// <exception cref="{{packageName}}.Client.ApiException">Thrown when fails to make API call</exception>
         {{#allParams}}/// <param name="{{paramName}}">{{description}}{{^required}} (optional{{#defaultValue}}, default to {{.}}{{/defaultValue}}){{/required}}</param>
@@ -362,6 +363,7 @@ namespace {{packageName}}.Api
 
         /// <summary>
         /// {{summary}} {{notes}}
+        /// {{#autoPaginate}}This method supports automatic pagination. When a request is made without specifying the top or skip parameter, all results are returned, as if the page length was infinite.{{/autoPaginate}}
         /// </summary>
         /// <exception cref="{{packageName}}.Client.ApiException">Thrown when fails to make API call</exception>
         {{#allParams}}/// <param name="{{paramName}}">{{description}}{{^required}} (optional{{#defaultValue}}, default to {{.}}{{/defaultValue}}){{/required}}</param>
@@ -376,6 +378,7 @@ namespace {{packageName}}.Api
         {{#supportsAsync}}
         /// <summary>
         /// {{summary}} {{notes}}
+        /// {{#autoPaginate}}This method supports automatic pagination. When a request is made without specifying the top or skip parameter, all results are returned, as if the page length was infinite.{{/autoPaginate}}
         /// </summary>
         /// <exception cref="{{packageName}}.Client.ApiException">Thrown when fails to make API call</exception>
         {{#allParams}}/// <param name="{{paramName}}">{{description}}{{^required}} (optional{{#defaultValue}}, default to {{.}}{{/defaultValue}}){{/required}}</param>
@@ -384,11 +387,11 @@ namespace {{packageName}}.Api
         {
              {{#returnType}}ApiResponse<{{{returnType}}}> localVarResponse = await {{operationId}}AsyncWithHttpInfo({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}});
              return localVarResponse.Data;{{/returnType}}{{^returnType}}await {{operationId}}AsyncWithHttpInfo({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}});{{/returnType}}
-
         }
 
         /// <summary>
         /// {{summary}} {{notes}}
+        /// {{#autoPaginate}}This method supports automatic pagination. When a request is made without specifying the top or skip parameter, all results are returned, as if the page length was infinite.{{/autoPaginate}}
         /// </summary>
         /// <exception cref="{{packageName}}.Client.ApiException">Thrown when fails to make API call</exception>
         {{#allParams}}/// <param name="{{paramName}}">{{description}}{{^required}} (optional{{#defaultValue}}, default to {{.}}{{/defaultValue}}){{/required}}</param>

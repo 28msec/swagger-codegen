@@ -13,12 +13,12 @@ public class CellStoreCodegenParameter extends CodegenParameter {
     public Boolean isPatternParam;
     public String pattern, patternSuffix;
     public String conversion;
-    
+
     public enum Kind 
     {
-    	NORMAL,
-    	PATTERN,
-    	HARDCODED
+      NORMAL,
+      PATTERN,
+      HARDCODED
     }    
     
     public Kind getParameterKind()

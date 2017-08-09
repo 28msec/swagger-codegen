@@ -96,30 +96,14 @@ public class CellStoreCSharpClientCodegen extends CSharpClientCodegen
         op.allParams.get(op.allParams.size() -1 ).hasMore = false;
     }
 
+    op.initAutoPagination();
+
     return op;
   }
 
   private boolean includeParameter(Parameter param)
   {
-    Map<String, Object> extensions = param.getVendorExtensions();
-    if (extensions.size() > 0)
-    {
-      Object excludeFromBindings = extensions.get("x-exclude-from-bindings");
-      if (excludeFromBindings != null)
-      {
-        if (excludeFromBindings instanceof Boolean)
-        {
-          if (((Boolean)excludeFromBindings).booleanValue())
-            return false;
-        }
-        else
-        {
-          String msg = "Invalid value for x-exclude-from-bindings, only booleans are allowed\n";
-          throw new RuntimeException(msg);
-        }
-      }
-    }
-    return true;
+    return !getBooleanExtensionValue(param.getVendorExtensions(), "x-exclude-from-bindings", false);
   }
 
   @Override
@@ -160,7 +144,7 @@ public class CellStoreCSharpClientCodegen extends CSharpClientCodegen
     if(p.getParameterKind() == CellStoreCodegenParameter.Kind.PATTERN)
     {
       p.isPatternParam = new Boolean(true);
-      String pattern = (String)p.vendorExtensions.get("x-name-pattern");
+      String pattern = getStringExtensionValue(p.vendorExtensions, "x-name-pattern");
       p.pattern = pattern;
       int pos = pattern.lastIndexOf("::");
       if(pos != -1)
@@ -174,7 +158,7 @@ public class CellStoreCSharpClientCodegen extends CSharpClientCodegen
       }
     }
     else if(p.getParameterKind() == CellStoreCodegenParameter.Kind.HARDCODED)
-      p.defaultValue = (String)p.vendorExtensions.get("x-binding-value");
+      p.defaultValue = getStringExtensionValue(p.vendorExtensions, "x-binding-value");
 
     return p;
   }
@@ -211,4 +195,45 @@ public class CellStoreCSharpClientCodegen extends CSharpClientCodegen
     return objs;
   }
 
+  public static boolean getBooleanExtensionValue(Map<String, Object> vendorExtensions, String name, boolean defaultValue)
+  {
+    if (vendorExtensions != null && !vendorExtensions.isEmpty())
+    {
+      Object extension = vendorExtensions.get(name);
+      if (extension != null)
+      {
+        if (extension instanceof Boolean)
+        {
+          return ((Boolean)extension).booleanValue();
+        }
+        else
+        {
+          String msg = "Invalid value for " + name + ", only booleans are allowed\n";
+          throw new RuntimeException(msg);
+        }
+      }
+    }
+    return defaultValue;
+  }
+
+  public static String getStringExtensionValue(Map<String, Object> vendorExtensions, String name)
+  {
+    if (vendorExtensions != null && !vendorExtensions.isEmpty())
+    {
+      Object extension = vendorExtensions.get(name);
+      if (extension != null)
+      {
+        if (extension instanceof String)
+        {
+          return (String)extension;
+        }
+        else
+        {
+          String msg = "Invalid value for " + name + ", only strings are allowed\n";
+          throw new RuntimeException(msg);
+        }
+      }
+    }
+    return null;
+  }
 }
