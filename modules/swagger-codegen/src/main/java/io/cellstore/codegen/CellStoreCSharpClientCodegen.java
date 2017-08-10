@@ -96,7 +96,9 @@ public class CellStoreCSharpClientCodegen extends CSharpClientCodegen
         op.allParams.get(op.allParams.size() -1 ).hasMore = false;
     }
 
-    op.initAutoPagination();
+    op.initAutoPagination(this);
+    if (op.autoPaginate)
+      op.autoPaginateIfNotSpecifiedCondition = String.join("== null && ", op.autoPaginateIfNotSpecified) + " == null";
 
     return op;
   }
@@ -208,8 +210,7 @@ public class CellStoreCSharpClientCodegen extends CSharpClientCodegen
         }
         else
         {
-          String msg = "Invalid value for " + name + ", only booleans are allowed\n";
-          throw new RuntimeException(msg);
+          throw new RuntimeException("Invalid value for " + name + ", only booleans are allowed");
         }
       }
     }
@@ -229,8 +230,35 @@ public class CellStoreCSharpClientCodegen extends CSharpClientCodegen
         }
         else
         {
-          String msg = "Invalid value for " + name + ", only strings are allowed\n";
-          throw new RuntimeException(msg);
+          throw new RuntimeException("Invalid value for " + name + ", only strings are allowed");
+        }
+      }
+    }
+    return null;
+  }
+
+  public static ArrayList<String> getStringArrayExtensionValue(Map<String, Object> vendorExtensions, String name)
+  {
+    if (vendorExtensions != null && !vendorExtensions.isEmpty())
+    {
+      Object extension = vendorExtensions.get(name);
+      if (extension != null)
+      {
+        if (extension instanceof ArrayList)
+        {
+          ArrayList<String> ret = new ArrayList<>();
+          for (Object item: (ArrayList)extension)
+          {
+            if (item instanceof String)
+              ret.add((String)item);
+            else
+              throw new RuntimeException("Invalid value for " + name + ", only an array of strings is allowed");
+          }
+          return ret;
+        }
+        else
+        {
+          throw new RuntimeException("Invalid value for " + name + ", only an array of strings is allowed");
         }
       }
     }

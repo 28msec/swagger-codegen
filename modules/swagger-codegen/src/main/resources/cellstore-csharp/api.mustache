@@ -372,7 +372,7 @@ namespace {{packageName}}.Api
         public ApiResponse<{{#returnType}} {{{returnType}}} {{/returnType}}{{^returnType}}Object{{/returnType}}> {{operationId}}WithHttpInfo ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{#hasMore}}, {{/hasMore}}{{/allParams}})
         {
             {{#autoPaginate}}
-            if (top == null && skip == null && count == null)
+            if ({{{autoPaginateIfNotSpecifiedCondition}}})
             {
                 ApiResponse<Object> localVarFirstResponse = null;
                 JObject localVarRet = null;
@@ -443,7 +443,7 @@ namespace {{packageName}}.Api
         public async System.Threading.Tasks.Task<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Object{{/returnType}}>> {{operationId}}AsyncWithHttpInfo ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{#hasMore}}, {{/hasMore}}{{/allParams}})
         {
             {{#autoPaginate}}
-            if (top == null && skip == null && count == null)
+            if ({{{autoPaginateIfNotSpecifiedCondition}}})
             {
                 ApiResponse<Object> localVarFirstResponse = null;
                 JObject localVarRet = null;
