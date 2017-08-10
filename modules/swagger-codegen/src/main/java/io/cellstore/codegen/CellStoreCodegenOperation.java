@@ -11,7 +11,7 @@ public class CellStoreCodegenOperation extends CodegenOperation {
     public List<CodegenParameter> hardcodedQueryParams = new ArrayList<CodegenParameter>();
 
     public Boolean autoPaginate = false;
-    public String autoPaginateCountField, autoPaginateResultField;
+    public String autoPaginateCountField, autoPaginateResultField, autoPaginateLimitField;
     public List<String> autoPaginateIfNotSpecified = new ArrayList<>();
     public String autoPaginateIfNotSpecifiedCondition;
 
@@ -27,9 +27,11 @@ public class CellStoreCodegenOperation extends CodegenOperation {
       {
         autoPaginateCountField = CellStoreCSharpClientCodegen.getStringExtensionValue(vendorExtensions, "x-autoPaginateCountField");
         autoPaginateResultField = CellStoreCSharpClientCodegen.getStringExtensionValue(vendorExtensions, "x-autoPaginateResultField");
+        autoPaginateLimitField = CellStoreCSharpClientCodegen.getStringExtensionValue(vendorExtensions, "x-autoPaginateLimitField");
         ArrayList<String> autoPaginateIfNotSpecifiedRaw = CellStoreCSharpClientCodegen.getStringArrayExtensionValue(vendorExtensions, "x-autoPaginateIfNotSpecified");
-        if (autoPaginateCountField == null || autoPaginateResultField == null || autoPaginateIfNotSpecifiedRaw == null)
-          throw new RuntimeException("When x-autoPaginate is specified and true, x-autoPaginateCountField, x-autoPaginateResultField x-autoPaginateIfNotSpecified must be specified");
+        if (autoPaginateCountField == null || autoPaginateResultField == null || autoPaginateIfNotSpecifiedRaw == null || autoPaginateLimitField == null)
+          throw new RuntimeException("When x-autoPaginate is specified and true, x-autoPaginateCountField, " +
+                                     "x-autoPaginateResultField, x-autoPaginateLimitField and x-autoPaginateIfNotSpecified must be specified");
         if (autoPaginateIfNotSpecifiedRaw.size() == 0)
           throw new RuntimeException("x-autoPaginateIfNotSpecified cannot be empty");
 

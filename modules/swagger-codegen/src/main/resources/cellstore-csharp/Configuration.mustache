@@ -107,6 +107,23 @@ namespace {{packageName}}.Client
         }
 
         /// <summary>
+        /// Gets the default automatic pagination page length for a given resource, used for legacy Cellstore versions.
+        /// </summary>
+        /// <param name="resource">Resource</param>
+        /// <returns>limit</returns>
+        public int DefaultAutoPaginateLimit(String resource)
+        {
+            switch (resource)
+            {
+                 case "facts":
+                    return 20000;
+                 default:
+                    return 10000;
+            }
+        }
+
+
+        /// <summary>
         /// Gets or sets the default API client for making HTTP calls.
         /// </summary>
         /// <value>The API client.</value>

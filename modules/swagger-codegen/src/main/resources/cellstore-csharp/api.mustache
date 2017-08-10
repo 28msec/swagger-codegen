@@ -80,6 +80,55 @@ namespace {{packageName}}.Api
     {
         private {{packageName}}.Client.ExceptionFactory _exceptionFactory = (name, request, response) => null;
 
+        private Dictionary<string, int> limits = null;
+
+        /// <summary>
+        /// Retrieves the cellstore page limit for a give resource.
+        /// </summary>
+        /// <param name="resource">Resource</param>
+        /// <param name="token">Token</param>
+        /// <returns>Max page limit as integer</returns>
+        private int GetLimit(string resource, string token)
+        {
+            if (limits == null)
+            {
+                limits = new Dictionary<string, int>();
+                try
+                {
+                    IRestRequest request = new RestRequest("/api/configuration", Method.GET);
+                    request.AddQueryParameter("token", token);
+                    IRestResponse response = (IRestResponse)Configuration.ApiClient.CallApi(request);
+                    int statusCode = (int)response.StatusCode;
+
+                    if (ExceptionFactory != null)
+                    {
+                        Exception exception = ExceptionFactory("GetConfiguration", request, response);
+                        if (exception != null) throw exception;
+                    }
+
+                    Object cellstoreConfig = Configuration.ApiClient.Deserialize(response, typeof(Object), null);
+                    JObject limitsObj = ApiClient.GetField<JObject>(cellstoreConfig, new String[] { "limits" });
+                    foreach (String key in limitsObj.Properties().Select(p => p.Name).ToList())
+                    {
+                        int value = ApiClient.GetField<int>(cellstoreConfig, new String[] { "limits", key, "page" });
+                        limits.Add(key, value);
+                    }
+                }
+                catch (ApiException e)
+                {
+                    if (e.ErrorCode == 400 || e.ErrorCode == 404)
+                        return Configuration.DefaultAutoPaginateLimit(resource);
+                    else
+                        throw e;
+                }
+            }
+            int limit;
+            if (limits.TryGetValue(resource, out limit))
+                return limit;
+            else
+                return Configuration.DefaultAutoPaginateLimit(resource);
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="{{classname}}"/> class.
         /// </summary>
@@ -376,7 +425,7 @@ namespace {{packageName}}.Api
             {
                 ApiResponse<Object> localVarFirstResponse = null;
                 JObject localVarRet = null;
-                top = 30;
+                top = GetLimit("{{{autoPaginateLimitField}}}", token);
                 skip = 0;
                 int localVarNumRequests = 0;
                 int localVarRetrieved;
@@ -447,7 +496,7 @@ namespace {{packageName}}.Api
             {
                 ApiResponse<Object> localVarFirstResponse = null;
                 JObject localVarRet = null;
-                top = 30;
+                top = GetLimit("{{{autoPaginateLimitField}}}", token);
                 skip = 0;
                 int localVarNumRequests = 0;
                 int localVarRetrieved;
