@@ -523,35 +523,64 @@ namespace {{packageName}}.Api
             {{#autoPaginate}}
             if ({{{autoPaginateIfNotSpecifiedCondition}}})
             {
+                if (top.HasValue && top.Value < 0)
+                    throw new ApiException(400, "Invalid value for the top parameter, it must be equal or greater than 0.");
+                if (skip.HasValue && skip.Value < 0)
+                    throw new ApiException(400, "Invalid value for the skip parameter, it must be equal or greater than 0.");
+
                 ApiResponse<Object> localVarFirstResponse = null;
+                JArray localVarRequestsStats = new JArray();
                 JObject localVarRet = null;
-                top = GetLimit("{{{autoPaginateLimitField}}}", token);
-                skip = 0;
-                int localVarNumRequests = 0;
-                int localVarRetrieved;
+                int localVarPageSize = GetLimit("{{{autoPaginateLimitField}}}", token);
+
+                int localVarRequested = top.HasValue ? top.Value : 0; //How many items did the user request?
+                int localVarRetrievedTotal = 0; //How many items did we retrieve already across all requests?
+                int localVarRetrievedCurrent = 0; //How many items did we retrieve with the current request?
+
+                /* The first page size.
+                 * If the user asked for the full response, it is the maximum page size setting.
+                 * Otherwise the size the user asked, capped at the maximum page size setting.
+                 */
+                top = localVarRequested > 0 ? Math.Min(localVarRequested - localVarRetrievedTotal, localVarPageSize) : localVarPageSize;
+
+                //The first page skip. It is what the user asked, if specified. Otherwise it is 0.
+                skip = skip.HasValue ? skip.Value : 0;
                 do
                 {
                     IRestRequest localVarRequest = {{operationId}}BuildRequest({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}});
-                    IRestResponse localVarResponse = (IRestResponse)await Configuration.ApiClient.CallApiAsync(localVarRequest);
+                    IRestResponse localVarResponse = (IRestResponse) await Configuration.ApiClient.CallApiAsync(localVarRequest);
                     ApiResponse<Object> localVarApiResponse = {{operationId}}ProcessResponse(localVarRequest, localVarResponse);
                     if (localVarFirstResponse == null)
                         localVarFirstResponse = localVarApiResponse;
                     Object localVarResponseBody = localVarApiResponse.Data;
 
-                    try
-                    {
-                        localVarRet = ApiClient.MergeResponses(localVarRet, localVarResponseBody, "{{autoPaginateCountField}}", "{{autoPaginateResultField}}");
-                        localVarRetrieved = ApiClient.GetField<int>(localVarResponseBody, new string[] { "Statistics", "{{autoPaginateCountField}}" });
-                    }
-                    catch (ApiException e)
-                    {
-                        throw new ApiException(localVarApiResponse.StatusCode, e.Message, localVarRequest, localVarResponse);
-                    }
+                    localVarRet = ApiClient.MergeResponses(localVarRet, localVarResponseBody, "{{autoPaginateCountField}}", "{{autoPaginateResultField}}");
+                    localVarRetrievedCurrent = ApiClient.GetField<int>(localVarResponseBody, new string[] { "Statistics", "{{autoPaginateCountField}}" });
+                    localVarRetrievedTotal += localVarRetrievedCurrent;
+
+                    JObject localVarRequestStats = new JObject();
+                    localVarRequestStats.Add("Top", top);
+                    localVarRequestStats.Add("Skip", skip);
+                    localVarRequestStats.Add("Interval", "" + skip + "-" + (skip + top));
+                    localVarRequestStats.Add("Retrieved", localVarRetrievedCurrent);
+                    localVarRequestsStats.Add(localVarRequestStats);
+
+                    //Did we fetch less items than we asked for? Then we are on the last page
+                    if (localVarRetrievedCurrent < top)
+                        break;
+
+                    //Did we fetch all the items the user asked for? Then we do not need to fetch more
+                    if (localVarRequested > 0 && localVarRetrievedTotal >= localVarRequested)
+                        break;
+
                     skip += top;
-                    localVarNumRequests++;
+
+                    //Did the user ask a specific number of items? Then we make sure to not ask for more
+                    if (localVarRequested > 0)
+                        top = Math.Min(localVarRequested - localVarRetrievedTotal, localVarPageSize);
                 }
-                while (localVarRetrieved == top);
-                ApiClient.GetField<JObject>(localVarRet, new string[] { "Statistics" }).Add("NumRequests", localVarNumRequests);
+                while (true);
+                ApiClient.GetField<JObject>(localVarRet, new string[] { "Statistics" }).Add("Requests", localVarRequestsStats);
                 return new ApiResponse<Object>(localVarFirstResponse.StatusCode, localVarFirstResponse.Headers, localVarRet);
             }
             else
