@@ -113,13 +113,7 @@ namespace {{packageName}}.Client
         /// <returns>limit</returns>
         public int DefaultAutoPaginateLimit(String resource)
         {
-            switch (resource)
-            {
-                 case "facts":
-                    return 20000;
-                 default:
-                    return 10000;
-            }
+            return 10000;
         }
 
 
