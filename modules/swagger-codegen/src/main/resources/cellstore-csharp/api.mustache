@@ -423,6 +423,11 @@ namespace {{packageName}}.Api
             {{#autoPaginate}}
             if ({{{autoPaginateIfNotSpecifiedCondition}}})
             {
+                if (top.HasValue && top.Value < 0)
+                    throw new ApiException(400, "Invalid value for the top parameter, it must be equal or greater than 0.");
+                if (skip.HasValue && skip.Value < 0)
+                    throw new ApiException(400, "Invalid value for the skip parameter, it must be equal or greater than 0.");
+
                 ApiResponse<Object> localVarFirstResponse = null;
                 JArray localVarRequestsStats = new JArray();
                 JObject localVarRet = null;
